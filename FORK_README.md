@@ -105,10 +105,25 @@ Modified (wiring + guards):
 ```bash
 pnpm install
 pnpm run build            # electron-vite build (main + preload + renderer)
-pnpm exec electron-builder --linux AppImage
+pnpm exec electron-builder --linux AppImage rpm
 ```
 
-Output: `dist/Heroic-2.22.4-linux-x86_64.AppImage`.
+Output: `dist/Heroic-1.0.0-linux-x86_64.AppImage` and `dist/Heroic-1.0.0-linux-x86_64.rpm`.
+
+If `electron-builder` cannot build the RPM itself (its bundled fpm/Ruby is
+incompatible with some distros, e.g. missing libcrypt.so.1), build it with the
+system toolchain instead. After the AppImage step above, `dist/linux-unpacked`
+and `dist/.icon-set` already exist, so:
+
+```bash
+rpmbuild -bb spec/heroic-twin.spec
+# or point the spec at a different dist directory:
+rpmbuild --define 'distroot /path/to/dist' -bb spec/heroic-twin.spec
+```
+
+Output: `~/rpmbuild/RPMS/x86_64/heroic-twin-1.0.0-1.x86_64.rpm` (installs to
+`/opt/Heroic`, binary `heroic-twin`, desktop entry + icon set, same runtime
+data dir as the official launcher).
 
 Verified: `tsc --noEmit` clean, `electron-vite build` clean, all 177 jest
 tests pass, AppImage builds and runs, and it resolves to `~/.config/heroic`

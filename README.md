@@ -50,6 +50,26 @@ Heroic is built with Web Technologies:
   - [Sponsors](#sponsors)
   - [Screenshots](#screenshots)
   - [Credits](#credits)
+  - [Why this fork (RiRiRawrZ615)](#why-this-fork-ririrawrz615)
+
+## Why this fork (RiRiRawrZ615)
+
+Heroic is designed with an always-online assumption: on startup and while running it polls GitHub (self-update + version/changelog banner), refreshes the Wine/Proton release lists, downloads winetricks scripts, updates DXVK/VKD3D, and can auto-download wine by default. On a flaky, slow, or fully offline machine that is a constant stream of failed requests, and the top bar can sit in a stuck "Offline" state that never resolves.
+
+Upstream already had the *pieces* for this: the top "Offline" banner, a connectivity monitor, and "follow the connection" behavior for some checks. But that offline handling was essentially fake / unusable in practice:
+
+- The banner was purely cosmetic. It reflected *connectivity*, not *policy*. While it displayed "Offline", the launcher kept scheduling and retrying its online checks (self-update, changelog, wine refresh, winetricks, DXVK/VKD3D, default wine download) in the background.
+- There was no user control at all. You could not tell the launcher "stop calling out" for the life of the install, so on a machine that is offline by design there was no way to make Heroic actually behave like an offline application.
+
+This fork fixes that with a real **Online/Offline Mode** (Settings > General, config key `networkMode`):
+
+- **Auto (follow connection)** (default): online checks run only when the launcher detects it is online.
+- **Online**: always attempt online checks.
+- **Offline**: never call out. Cached release data is used where available, and nothing polls in the background.
+
+It also fixes a real startup bug this surfaced: on machines with no network (or a dead adapter) the app could hang before the GUI finished initializing, because the entire frontend is released from React's `<Suspense>` boundary only after i18next finishes loading the active language *over the network*. The fork preloads the active language bundle into i18next before first render, adds a window-show safety net, and stops the connectivity ping loop in offline mode. Verified: the offline packaged build reaches "Frontend Ready" in the same second as startup and makes zero i18n backend fetches.
+
+Base: upstream v2.22.4 (commit `509a34f`). Identity: npm name `heroic-twin`, appId `com.heroictwin.hgl`; the runtime app name is intentionally kept as `heroic` so this fork and the official launcher share the same `~/.config/heroic` data directory and remain fully interchangeable. See [FORK_README.md](FORK_README.md) for the full file-level change list and verification notes.
 
 ## Features available right now
 
