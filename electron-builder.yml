@@ -1,4 +1,4 @@
-appId: com.heroicgameslauncher.hgl
+appId: com.heroictwin.hgl
 productName: Heroic
 files:
   - build/**/*
